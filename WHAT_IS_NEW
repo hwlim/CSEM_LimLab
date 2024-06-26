@@ -1,0 +1,17 @@
+CSEM v2.4
+
+- Replaced the Fenwick tree like structure with a linear structure to speed up CSEM
+- Added user-friendly reminders if CSEM guesses that users forget to compile the codes
+- Added '--no-extending-reads' option to 'run-csem' to disable extending reads
+- Added '--tag-align' option to 'csem-generate-input' to support tagAlign format files as inputs for downstream ChIP-Seq peak callers
+
+--------------------------------------------------------------------------------
+
+CSEM v1.0
+
+- Extend reads to the average fragment length and use the midpoint instead of the left most genomic coordinatefor allocating multi-reads
+- Take SAM/BAM formatted files as input and generate BAM formatted outputs
+- Generate input files for downstream peak callers using CSEM's BAM formatted file
+- Generate wiggle plots for visualization
+- Provide a script to extract reads from eland files
+
