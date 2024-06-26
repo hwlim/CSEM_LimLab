@@ -46,6 +46,11 @@ if (!$noExtendingReads) { $command .= " --extend-reads"; }
 
 &runCommand($command);
 
+#########################
+# Edit by Lim: 20240626
+# No need to generate sorted BAM file
+#########################
+__END__
 # sort the BAM file generated
 $command = $dir."sam/samtools sort $ARGV[2].bam $ARGV[2].sorted";
 &runCommand($command);
