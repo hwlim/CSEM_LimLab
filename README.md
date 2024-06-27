@@ -1,3 +1,8 @@
+2024/06/27
+
+New flag option to skip sorting/indexing output bam/sam file
+
+
 2024/06/26
 
 This github is modified version of CSE for minor tweak and update by Lim lab.
