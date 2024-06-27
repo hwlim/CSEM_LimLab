@@ -11,6 +11,7 @@ use csem_perl_utils;
 my $nThreads = 1;
 my $is_sam = 0; # default
 my $is_bam = 0;
+my $noSort = 0;
 my $upperBound = 200;
 my $noExtendingReads = 0;
 my $version = 0;
@@ -19,6 +20,7 @@ my $help = 0;
 GetOptions("p|num-threads=i" => \$nThreads,
 	   "sam" => \$is_sam,
 	   "bam" => \$is_bam,
+	   "no-sort" => \$noSort,
 	   "upper-bound=i" => \$upperBound,
 	   "no-extending-reads" => \$noExtendingReads,
 	   "version" => \$version,
@@ -46,11 +48,9 @@ if (!$noExtendingReads) { $command .= " --extend-reads"; }
 
 &runCommand($command);
 
-#########################
-# Edit by Lim: 20240626
-# No need to generate sorted BAM file
-#########################
-__END__
+# if set, skip sorting
+if ($noSort) { exit 0 }
+
 # sort the BAM file generated
 $command = $dir."sam/samtools sort $ARGV[2].bam $ARGV[2].sorted";
 &runCommand($command);
@@ -106,6 +106,10 @@ Input file is in SAM format. (Default: on)
 =item B<--bam>
 
 Input file is in BAM format. (Default: off)
+
+=item B<--no-sort>
+
+Skip sorting and indexing of the output file. (Default: off)
 
 =item B<--upper-bound> <int>
 
