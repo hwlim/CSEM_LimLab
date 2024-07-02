@@ -77,7 +77,7 @@ void loadData() {
   currentReadName = "";
   while (samParser->next(b)) {
     ++cnt;
-    if (cnt % 1000000 == 0) printf("%u FIN\n", cnt);
+    if (cnt % 1000000 == 0) fprintf(stderr, "%u FIN\n", cnt);
 
     if (!b.isAligned()) continue;
     readName = b.getName();
@@ -98,7 +98,7 @@ void loadData() {
 
   delete samParser;
 
-  printf("Loading data is finished!\n");
+  fprintf(stderr, "Loading data is finished!\n");
 }
 
 void splitJobs_and_Init() {
@@ -137,7 +137,7 @@ void splitJobs_and_Init() {
   pthreadWrapper.threads.assign(pthreadWrapper.num_threads_used, pthread_t());
 
   chromTable = new ChromTable(chrMap, alignments, halfws, nThreads, priorF);
-  printf("Splitting jobs and initialization are finished!\n");
+  fprintf(stderr, "Splitting jobs and initialization are finished!\n");
 }
 
 void* allocateMultiReads_per_thread(void* arg) {
@@ -183,7 +183,7 @@ void allocateMultiReads() {
     // update chromTable
     chromTable->update(ROUND < UPPERBOUND);
 
-    printf("ROUND = %d, MAX_DELTA = %.6g\n", ROUND, chromTable->getMaxDelta());
+    fprintf(stderr, "ROUND = %d, MAX_DELTA = %.6g\n", ROUND, chromTable->getMaxDelta());
   }
 }
 
@@ -208,18 +208,18 @@ void output() {
     bamWriter->write(b);
 
     ++cnt;
-    if (cnt % 1000000 == 0) printf("%u FIN\n", cnt);
+    if (cnt % 1000000 == 0) fprintf(stderr, "%u FIN\n", cnt);
   }
 
   delete samParser;
   delete bamWriter;
 
-  printf("Writing output is finished!\n");
+  fprintf(stderr, "Writing output is finished!\n");
 }
 
 int main(int argc, char* argv[]) {
   if (argc < 7 || argc > 10) {
-    printf("Usage : csem input_type input_file fragment_length UPPERBOUND output_name number_of_threads [--extend-reads] [--prior prior_file]\n");
+    fprintf(stderr, "Usage : csem input_type input_file fragment_length UPPERBOUND output_name number_of_threads [--extend-reads] [--prior prior_file]\n");
     exit(-1);
   }
 
