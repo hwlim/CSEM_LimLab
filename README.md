@@ -17,10 +17,11 @@ Then add the folder to PATH
 
 
 ## Modification history by Lim Lab
+### 2024/07/05
+New script ngs.unifyCSEM.py was added (written by Christopher Ahn) to randomely select single alignment out of multiple alignments per read-pair follinwg the CSEM posterior probility.
 
 ### 2024/06/27
 New flag option to skip sorting/indexing output bam/sam file
-
 
 ### 2024/06/26
 GitHub repository created
