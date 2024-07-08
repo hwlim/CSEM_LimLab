@@ -4,8 +4,8 @@
     Written by:
         Christopher Ahn
 
-    Script used to pick one read pair (among multimappers) based on the posterior probability noted as "ZW:f:n" in the tags, where n is the probability
-    Input: bam file
+    Script used to test and check frequencies of unifyCSEM and output a scatterplot.
+    Input: test bam file
         - needs "ZW:f:n" information in the tags section where n is the probability
         - bam file needs to be sorted by read name
         - no bam index required
@@ -18,13 +18,21 @@ try:
 except ImportError:
     sys.exit("Error: This script requires the module \"pysam\" to run.")
 import argparse
+import os
+import re
 import sys
 import random
+from collections import Counter
+import pandas as pd
+import matplotlib.pyplot as plt
+
 
 #parse command line arguments
-options = argparse.ArgumentParser(description="Unify BAM file from CSEM by random selection following CSEM weights. Picks a single pair of reads among multimappers from a read name-sorted bam file based on a posterior probability. Posterior probability should be denoted in the metadata as \"ZW:f:n\", where n is the probability. Unique reads will have a posterior probabilty of 1, thus will be output as is.", usage="ngs.unifyCSEM.py (options) [bam]")
-options.add_argument('-o', '--outFile', default='output.bam',
-                        help='Output file name; default = output.bam')
+options = argparse.ArgumentParser(description="Test ngs.unifyCSEM.py by sampling reads in a test bam file n times and showing the results as a scatterplot.", usage="test.py (options) [bam]")
+options.add_argument('-o', '--outPrefix', default='~/scatterplot',
+                        help='Output file name for scatterplot; default = output.[png,pdf]')
+options.add_argument('-n', '--repeats', default=10000,
+                        help='Number of times to repeat the simulation; default = 10000')
 options.add_argument('bam',
                         help='Required; Read sorted bam file containing \"ZW:f:n\" in the metadata; n is the posterior probability.')
 args = options.parse_args()
@@ -52,8 +60,15 @@ def get_prob(read):
     print('"ZW" tag is not found in the metadata section of the bam file. Exiting...')
     exit()
 
-## main function
+## draw scatterplot after sampling
 def main():
+
+    n = int(args.repeats)
+    bamIn = args.bam
+    outPrefix = args.outPrefix
+
+    ## sample test
+    samplingList = []
 
     ## initialize variables
     savedReadName = ""
@@ -67,15 +82,25 @@ def main():
     ## list containing posterior probabilities; length n, where n is from NH:i:n
     readProbList = []
 
-    ## used to distinguish first and second pair
-    i = 0
-
-    ## open input file
-    with pysam.AlignmentFile(args.bam, "rb") as bam:
+    for j in range(n):
+        ## initialize variables
+        savedReadName = ""
         
-        ## open output file
-        with pysam.AlignmentFile(args.outFile, "wb", header=bam.header) as bamOutputFile:
-            
+        ## list containing a pair; always length of 2
+        readPairList = []
+        
+        ## list containing readPairLists; length n, where n is from NH:i:n
+        allReadsList = []
+        
+        ## list containing posterior probabilities; length n, where n is from NH:i:n
+        readProbList = []
+        
+        ## used to distinguish first and second pair
+        i = 0
+        
+        ## open input file
+        with pysam.AlignmentFile(bamIn, "rb") as bam:
+        
             ## go through each line of input file
             for read in bam:
                 
@@ -119,10 +144,10 @@ def main():
                     ## else do random.choices()
                     else:
                         finalPair = pick_pair(allReadsList, readProbList)
-                    
-                    ## write output to bam file
-                    bamOutputFile.write(finalPair[0])
-                    bamOutputFile.write(finalPair[1])
+
+                    ## print
+                    item = f'{finalPair[0].query_name}-{bam.get_reference_name(finalPair[0].reference_id)}-{finalPair[0].reference_start}-{finalPair[0].tags[-1][-1]}'
+                    samplingList.append(item)
                     
                     ## reset variables
                     readPairList = [read]
@@ -131,15 +156,52 @@ def main():
                     savedReadName = readName
                 
                 i += 1
-
+        
             ## take care of last pair of input bam file
             allReadsList.append(readPairList)
-
+        
             finalPair = pick_pair(allReadsList, readProbList)
             
-            ## write output to bam file
-            bamOutputFile.write(finalPair[0])
-            bamOutputFile.write(finalPair[1])
+            ## print
+            item = f'{finalPair[0].query_name}-{bam.get_reference_name(finalPair[0].reference_id)}-{finalPair[0].reference_start}-{finalPair[0].tags[-1][-1]}'
+            samplingList.append(item)
+
+
+    # Create a pandas Series
+    series_data = pd.Series(samplingList)
+
+    # Generate the frequency table
+    frequency_table = series_data.value_counts()
+
+    df = frequency_table.reset_index()
+    split_columns = df['index'].str.split('-', expand=True)
+
+    # Optionally, rename the new columns if needed
+    split_columns.columns = ['Col1', 'Col2', 'Col3', 'Col4']
+    df = pd.concat([split_columns, df.drop(columns=['index'])], axis=1)
+
+    # Extract the relevant columns for the scatter plot
+    x_values = df['Col4'].astype(float)  # Second last column
+    y_values = df['count']  # Last column
+
+    # Plotting the scatterplot
+    plt.figure(figsize=(10, 6))
+    plt.scatter(x_values, y_values, c='blue', alpha=0.5)
+
+    # Setting the x-axis range and ticks
+    plt.xlim(0, 1)
+    plt.xticks(rotation=45)
+
+    # Adding title and labels
+    plt.title(f'Weights vs Counts after sampling {n} times')
+    plt.xlabel('Weights')
+    plt.ylabel('Counts')
+
+    # Ensuring layout is tight to accommodate rotated x-axis labels
+    plt.tight_layout()
+
+    plt.savefig(f'{outPrefix}.png', format='png')
+    plt.savefig(f'{outPrefix}.pdf', format='pdf')
 
 if __name__ == "__main__":
     main()
